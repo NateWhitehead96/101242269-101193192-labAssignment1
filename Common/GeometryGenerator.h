@@ -127,6 +127,10 @@ public:
 	/// face has m rows and n columns of vertices.
 	///</summary>
 	MeshData CreateWedge(float width, float height, float depth, uint32 numSubdivisions);
+
+	MeshData CreateTriangularPrism(float bottomRadius, float height);
+
+	MeshData CreateDiamond(float radius);
 private:
 	
     Vertex MidPoint(const Vertex& v0, const Vertex& v1);

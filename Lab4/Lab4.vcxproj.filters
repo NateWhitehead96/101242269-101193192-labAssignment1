@@ -21,21 +21,6 @@
     <ClCompile Include="Week4-1-ShapesAppUsingDescriptorTable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Week4-2-ShapeAppsUsingRootDescriptor.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="BoxApp.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Week4-1-BoxUsingFrameShader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Week4-5-SphereUsingFrameShader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Week4-6-GridUsingFrameShader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\Common\Camera.cpp">
       <Filter>Resource Files</Filter>
     </ClCompile>

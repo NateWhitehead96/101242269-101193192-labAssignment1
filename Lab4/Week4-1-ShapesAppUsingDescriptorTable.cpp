@@ -10,6 +10,8 @@
 #include "../../Common/GeometryGenerator.h"
 #include "FrameResource.h"
 
+
+
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 using namespace DirectX::PackedVector;
@@ -554,6 +556,8 @@ void ShapesApp::BuildShapeGeometry()
 	GeometryGenerator::MeshData wedge = geoGen.CreateWedge(1.0f, 1.0f, 1.0f, 1);
 	GeometryGenerator::MeshData pyramid = geoGen.CreatePyramid(1.0f, 1.0f, 1.0f, 1);
 	GeometryGenerator::MeshData hexaprism = geoGen.CreateHexagonalPrism(1.5f, 3.0f, 6, 6);
+	GeometryGenerator::MeshData triprism = geoGen.CreateTriangularPrism(1.0f, 1.0f);
+	GeometryGenerator::MeshData diamond = geoGen.CreateDiamond(1.0f);
 	
 
 	//
@@ -572,6 +576,8 @@ void ShapesApp::BuildShapeGeometry()
 	UINT wedgeVertexOffset = geosphereVertexOffset + (UINT)geosphere.Vertices.size();
 	UINT pyramidVertexOffset = wedgeVertexOffset + (UINT)wedge.Vertices.size();
 	UINT hexaprismVertexOffset = pyramidVertexOffset + (UINT)pyramid.Vertices.size();
+	UINT triprismVertexOffset = hexaprismVertexOffset + (UINT)hexaprism.Vertices.size();
+	UINT diamondVertexOffset = triprismVertexOffset + (UINT)triprism.Vertices.size();
 	
 	// Cache the starting index for each object in the concatenated index buffer.
 	UINT boxIndexOffset = 0;
@@ -584,6 +590,8 @@ void ShapesApp::BuildShapeGeometry()
 	UINT wedgeIndexOffset = geosphereIndexOffset + (UINT)geosphere.Indices32.size();
 	UINT pyramidIndexOffset = wedgeIndexOffset + (UINT)wedge.Indices32.size();
 	UINT hexaprismIndexOffset = pyramidIndexOffset + (UINT)pyramid.Indices32.size();
+	UINT triprismIndexOffset = hexaprismIndexOffset + (UINT)hexaprism.Indices32.size();
+	UINT diamondIndexOffset = triprismIndexOffset + (UINT)triprism.Indices32.size();
 	
 
     // Define the SubmeshGeometry that cover different 
@@ -639,6 +647,16 @@ void ShapesApp::BuildShapeGeometry()
 	hexaprismSubmesh.StartIndexLocation = hexaprismIndexOffset;
 	hexaprismSubmesh.BaseVertexLocation = hexaprismVertexOffset;
 
+	SubmeshGeometry triprismSubmesh;
+	triprismSubmesh.IndexCount = (UINT)triprism.Indices32.size();
+	triprismSubmesh.StartIndexLocation = triprismIndexOffset;
+	triprismSubmesh.BaseVertexLocation = triprismVertexOffset;
+
+	SubmeshGeometry diamondSubmesh;
+	diamondSubmesh.IndexCount = (UINT)diamond.Indices32.size();
+	diamondSubmesh.StartIndexLocation = diamondIndexOffset;
+	diamondSubmesh.BaseVertexLocation = diamondVertexOffset;
+
 	//
 	// Extract the vertex elements we are interested in and pack the
 	// vertices of all the meshes into one vertex buffer.
@@ -654,7 +672,9 @@ void ShapesApp::BuildShapeGeometry()
 		geosphere.Vertices.size() +
 		wedge.Vertices.size() +
 		pyramid.Vertices.size() +
-		hexaprism.Vertices.size();
+		hexaprism.Vertices.size() +
+		triprism.Vertices.size() +
+		diamond.Vertices.size();
 
 	std::vector<Vertex> vertices(totalVertexCount);
 
@@ -719,6 +739,18 @@ void ShapesApp::BuildShapeGeometry()
 		vertices[k].Color = XMFLOAT4(DirectX::Colors::Yellow);
 	}
 
+	for (size_t i = 0; i < triprism.Vertices.size(); ++i, ++k)
+	{
+		vertices[k].Pos = triprism.Vertices[i].Position;
+		vertices[k].Color = XMFLOAT4(DirectX::Colors::Yellow);
+	}
+
+	for (size_t i = 0; i < diamond.Vertices.size(); ++i, ++k)
+	{
+		vertices[k].Pos = diamond.Vertices[i].Position;
+		vertices[k].Color = XMFLOAT4(DirectX::Colors::Blue);
+	}
+
 
 	std::vector<std::uint16_t> indices;
 	indices.insert(indices.end(), std::begin(box.GetIndices16()), std::end(box.GetIndices16()));
@@ -731,6 +763,8 @@ void ShapesApp::BuildShapeGeometry()
 	indices.insert(indices.end(), std::begin(wedge.GetIndices16()), std::end(wedge.GetIndices16()));
 	indices.insert(indices.end(), std::begin(pyramid.GetIndices16()), std::end(pyramid.GetIndices16()));
 	indices.insert(indices.end(), std::begin(hexaprism.GetIndices16()), std::end(hexaprism.GetIndices16()));
+	indices.insert(indices.end(), std::begin(triprism.GetIndices16()), std::end(triprism.GetIndices16()));
+	indices.insert(indices.end(), std::begin(diamond.GetIndices16()), std::end(diamond.GetIndices16()));
 	
     const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
     const UINT ibByteSize = (UINT)indices.size()  * sizeof(std::uint16_t);
@@ -765,6 +799,8 @@ void ShapesApp::BuildShapeGeometry()
 	geo->DrawArgs["wedge"] = wedgeSubmesh;
 	geo->DrawArgs["pyramid"] = pyramidSubmesh;
 	geo->DrawArgs["hexaprism"] = hexaprismSubmesh;
+	geo->DrawArgs["triprism"] = triprismSubmesh;
+	geo->DrawArgs["diamond"] = diamondSubmesh;
 
 	mGeometries[geo->Name] = std::move(geo);
 }
@@ -933,6 +969,26 @@ void ShapesApp::BuildRenderItems()
 	quadRitem->StartIndexLocation = quadRitem->Geo->DrawArgs["quad"].StartIndexLocation;
 	quadRitem->BaseVertexLocation = quadRitem->Geo->DrawArgs["quad"].BaseVertexLocation;
 	mAllRitems.push_back(std::move(quadRitem));
+	// Triangular prism, roof of small building
+	auto triprismRitem = std::make_unique<RenderItem>();
+	XMStoreFloat4x4(&triprismRitem->World, XMMatrixScaling(1.8f, 1.8f, 1.8f)* XMMatrixTranslation(9.6f, 3.0f, 0.0f));
+	triprismRitem->ObjCBIndex = 11;
+	triprismRitem->Geo = mGeometries["shapeGeo"].get();
+	triprismRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+	triprismRitem->IndexCount = triprismRitem->Geo->DrawArgs["triprism"].IndexCount;
+	triprismRitem->StartIndexLocation = triprismRitem->Geo->DrawArgs["triprism"].StartIndexLocation;
+	triprismRitem->BaseVertexLocation = triprismRitem->Geo->DrawArgs["triprism"].BaseVertexLocation;
+	mAllRitems.push_back(std::move(triprismRitem));
+	// Diamond boat/ thing in front of the city
+	auto diamondRitem = std::make_unique<RenderItem>();
+	XMStoreFloat4x4(&diamondRitem->World, XMMatrixScaling(1.8f, 1.8f, 1.8f)* XMMatrixTranslation(0.0f, 1.5f, -5.0f));
+	diamondRitem->ObjCBIndex = 12;
+	diamondRitem->Geo = mGeometries["shapeGeo"].get();
+	diamondRitem->PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+	diamondRitem->IndexCount = diamondRitem->Geo->DrawArgs["diamond"].IndexCount;
+	diamondRitem->StartIndexLocation = diamondRitem->Geo->DrawArgs["diamond"].StartIndexLocation;
+	diamondRitem->BaseVertexLocation = diamondRitem->Geo->DrawArgs["diamond"].BaseVertexLocation;
+	mAllRitems.push_back(std::move(diamondRitem));
 	
 	// All the render items are opaque.
 	for(auto& e : mAllRitems)
